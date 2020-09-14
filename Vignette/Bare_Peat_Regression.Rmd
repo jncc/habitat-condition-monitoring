@@ -1,0 +1,264 @@
+---
+title: "Bare Peat Regression Modelling"
+author: "Becky Trippier"
+date: "23/06/2020"
+output:
+  html_document:
+    df_print: paged
+    css: style.css
+    includes:
+      before_body: header.html
+  pdf_document: default
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE,echo=F}
+
+knitr::opts_chunk$set(echo = TRUE)
+# Built with r 3.6.0
+
+dirpath <- "folderpath/"
+
+```
+
+<div class="mycontent">
+
+This walkthrough explains the processes of: 
+
+* Converting the fine-scale bare peat map (25cm) into percentage cover per 10m pixel
+* Preparing predictor variable layers
+* Extracting training values
+* Running the regression modelling
+* Evaluating model performance
+
+
+<br><br>
+
+## Percentage cover calculations
+
+This process is scaling up fine-scale bare peat maps which were created in the 'Bare_Peat_Dectection.Rmd' walkthrough guide or directly in Peatpal. 
+
+This is calculated as a percentage cover per pixel through array calculations, where the two data layers are lined up and then the number of bare peat pixels per 10m pixel are added and divided by the total number of high-res cells per 10m pixel. 
+
+This takes some maths... 
+e.g. to calculate the percentage cover per 10m using a bare peat layer at 25cm spatial resolution you first line up the layers, cropping to the same extent. The difference between the two resolutions is calculated as:
+Low resolution / High resolution = resolution difference
+10/0.25 = 40
+
+For each cell in the low resolution data, 40 cells per row and 40 columns are extracted from the high resolution data (total 1600 cells). These are then used to calculate the percentage cover of bare peat for that cell by summing all the values and dividing by the total 1600 cells.
+
+This is carried out for each cell in the low resolution raster until you have a completed layer of percentage covers.  
+
+```{r pcov, eval=F}
+# run percentage cover calculation
+pcov_classify(img_path=paste0(dirpath,'Fine_scale_mapping/Masked/'), 
+              bare_path=paste0(dirpath,'Fine_scale_mapping/bare/'),
+              out_path=paste0(dirpath,'Fine_scale_mapping/'),
+              polymask=paste0(dirpath,'Shapefiles/CES_Site1_nonPlanted.shp'))
+
+# mosaic tiles
+pcov <- list.files(paste0(dirpath,'Fine_scale_mapping/bare_pcov/'),full.names=T)
+pcov_list <- purrr::map(pcov,raster)
+names(pcov_list)<-NULL
+pcov_list$fun <- mean
+pcov_mosaic <- do.call(raster::mosaic,c(pcov_list,progress="window"))
+raster::writeRaster(pcov_mosaic,paste0(dirpath,'Fine_scale_mapping/bare_pcov_mosaic.tif'))
+
+#plot output interactively with mapview
+pcov <- raster::raster(paste0(dirpath,"pcov_training.tif"))
+raster::crs(pcov) <- sp::CRS('+init=epsg:27700')
+mapview::mapviewOptions(basemaps = c("Esri.WorldImagery","OpenStreetMap"))
+mapview::mapview(pcov)
+```
+
+
+<br>
+
+## Preparing predictor variable layers 
+
+The predictor variables we are using to predict bare peat cover were a combination of:
+
+* Sentinel-2 bands
+* Sentinel-2 dervied indices
+* DTM and Slope
+* climatic variables - monthly rainfall, average, min and max temperatures
+
+These all need to be prepared in the same projection, extent and resolution in order to create a rasterstack for the modelling. 
+
+### Preparing the DTM and slope as rasters
+
+For this, I used the APGB DTM layer which comes in the format of individual tiles in a geodatabase. The 'gbd.tile()' function finds those tiles which intersect with the AOI and creates a dtm mosaic for just this area, saving on computational time. A slope layer was then created from this using functions available in the 'gdalUtils' package.
+
+
+```{r dtmslopevars, eval = FALSE}
+#run dtm function
+gdb.tile(AOI="AOI.shp",
+         gdbindex.path="ea_ihm_2014_dtm_index_5k.shp",
+         out.path=paste0(dirpath,"Data/DTM/")
+
+# we can then create a slope layer using gdalutils
+  gdalUtils::gdal_setInstallation()
+  gdalUtils::gdaldem(mode="slope",
+                     input_dem=paste0(dirpath,"Data/DTM/DTM_mosaic.tif",
+                     output = paste0(dirpath,"Data/DTM/DTM_slope.tif",verbose=T)
+
+```
+
+### Preparing the climatic variables as rasters
+
+Climate variables of monthly precipitation, maximum monthly temperature, minimum monthly tempearture and average monthly temperature were downloaded at 1km spatial resolution from the MetOffice HadUK dataset via the [CEDA archive](https://catalogue.ceda.ac.uk/uuid/4dc8450d889a491ebb20e724debe2dfb).
+
+```{r climatevars, eval = FALSE}
+#list all data files from met office
+met_files <- data.frame(files=list.files("/MetOffice_HadUK_monthly_grid_1km/",pattern='.nc'))
+#subset to seasonal records
+met_season <- met_files %>% dplyr::filter(stringr::str_detect(files, "Seas"))
+#iterate through taking just the summer season data
+out<- purrr:::map(met_season$files,function(metlayer){
+  met_raw <- raster::brick(paste0("MetOffice_HadUK_monthly_grid_1km/",as.character(metlayer)))
+  summer <- met_raw[[3]]
+  summer_crop <-raster::crop(summer,AOI)
+  #get filename of measure and year
+  filename_split <- stringr::str_split(gsub(as.character(metlayer),pattern="Had",replacement="_Had"),pattern='_')
+filename <- paste0(stringr::str_extract(as.character(filename_split[[1]][4]),'//d{4}'),'_',filename_split[[1]][2])
+#write out
+  raster::writeRaster(summer_crop, paste0(projfolder,'Variable_layers/site_',filename,'.tif'),overwrite=T)
+  
+})
+
+```
+
+### Prepare Sentinel-2 imagery
+
+  The optical image is first cropped to the Area of Interest (AOI). This function assumes the AOI shapefile is in the same crs as the Sentinel layer. 
+
+```{r, eval=F}
+projfolder <- 'folderpath/'
+
+#prep and crop sentinel imagery to new AOI
+s2_processing(s2path=paste0(projfolder,"Data/Sentinel-2/site/"),
+              out_folder = paste0(projfolder,"site/Variable_layers/"),
+              nirband=8,rband=3,bband=1,gband=2,swirband=9,
+              indices=c("Brightness","NDVI","RG","RB","NBR","NDWI","GLI"),
+              cropAOI=paste0(projfolder,'Data/Site_AOIs/site_S2_AOI_new.shp')
+
+```
+
+<br>
+
+### creat variable stacks for running the time series
+
+These need to be created for each sentinel imagery date using in either the time series models or to extract the training data with.
+```{r layerprep, eval=F}
+# create variable stacks
+sat_varstack(varpath = paste0(projfolder,'site/Variable_layers/'),
+             satimg='SEN2_20160605_lat58lon377_T30VVK_ORB123_utm30n_osgb_vmsk_sharp_rad_srefdem_stdsref_msk.tif',
+             satbands=8,
+             indices=c("Brightness","NDVI","RG","RB","NBR","NDWI","GLI"),
+             vars=c('site_2016_rainfall.tif',
+                    'site_2016_tas.tif',
+                    'site_2016_tasmin.tif',
+                    'site_2016_tasmax.tif',
+                    'site_slope.tif'),
+             mask= paste0(projfolder,'site1_mask.shp'),
+             outpath = paste0(projfolder,'site/Time_series_modelling/Varstacks/'),
+             stackname='site_2016')
+```
+
+
+### Covariate analysis
+
+Now the geospatial layers for each of the environmental variables are all aligned to the same extent, we can compare these layers to see whether they are highly correlated to each other and identify which layers would be best to use in the regression models. This is assessed through a correlation matrix and helps to reduce redundancy and speed up processing by eliminating closely aligning layers.
+
+```{r covaranalysis,eval=F}
+
+library(JNCCsdms)
+
+#list all variables - tif files
+tifs <- list.files(paste0(dirpath,"Data/RFR_layers/rfrlayers/"), pattern=".tif", full.names = T)
+
+# stack all the layers
+varstack <- raster::stack(tifs)
+
+# run  function to see how the variables correlate
+JNCCsdms::corrVars(varstack)
+
+```
+
+From this plot we can see those layers which are closer to 1 or -1 are highly correlated and so we could consider if we necessarily want to include both in the analysis.
+
+
+## Extracting training values
+
+train_extract() takes the percentage cover of bare peat layer as the 'trainr' input and crop and aligns the rasterstack of environmental variable layers to this. It then extracts all the values from both layers to create a dataframe of training values. The 'stratified' argument creates a field in the output dataframe called 'barecat' which categorised the bare cover values into five categories of equal intervals between 0-1. This can then be used in the regression model function to sample the data in a stratified way. This is carried out at this stage so that you can assess the training data before the modelling stage, and see if there is an adequate distribution of values present.  
+
+
+```{r extracttrain,eval=F}
+
+#extract variable values for all training cells in the raster
+trainvals <- train_extract(varstack=paste0(projfolder,'site/Time_series_modelling/Varstacks/site_2016.tif'),
+              varnames=c("NIRBand","Brightness","NDVI","RG","RB","NBR","NDWI","GLI","rainfall","av_temp","min_temp","max_temp",'slope'),
+              trainr=paste0(projfolder,'site/Fine_scale_mapping/bare_pcov_mosaic.tif'),
+              outfolder=paste0(projfolder,'site/Time_series_modelling/Training_data/'),
+              stratified = T)
+
+#draw histogram 
+ggplot2::ggplot(trainvals, ggplot2::aes(x=bare)) + 
+  ggplot2::geom_histogram(color="black", fill="white",bins=20) + 
+  ggplot2::xlab("Percentage cover of bare peat") +
+  ggplot2::ylab("Count")
+
+#table of values per category
+classes <- trainvals %>% dplyr::group_by(barecat) %>% dplyr::summarise(count=n())
+knitr::kable(classes) %>% kableExtra::kable_styling(full_width = F) 
+
+```
+
+<br>
+
+## Running the regression modelling
+
+RFReg trains and runs the regression models using the training data prepared above. This uses stratified sampling to sample data before splitting out into training and test datasets, the proportion of which is defined in the 'prop.test' argument. This trains the model and predicts across the time series data. 'max_tries' defines how many times to run the model and then the predicted maps are meaned at the end to alleviate some sampling bias. The RMSE, Rsquared and variable importance statistics are reported for each model run.
+
+```{r rfregmodel, eval=F}
+## look at how many per category
+training <- read.csv(paste0(projfolder,"site/Time_series_modelling/Training_data/site_2016.csv"))
+training %>% dplyr::group_by(barecat) %>% dplyr::summarise(n=dplyr::n())
+
+## train models and run predictions
+RFReg(training=paste0(projfolder,"site/Time_series_modelling/Training_data/site_2016.csv"),
+      varpredict=paste0(projfolder,"site/Time_series_modelling/Varstacks/"),
+      varnames=c("NIRBand","Brightness","NDVI","RG","RB","NBR","NDWI","GLI","rainfall","av_temp","min_temp","max_temp",
+                    'slope'),
+      out.folder=paste0(projfolder,"site/Time_series_modelling/RegressionModels/"),
+      max_tries=10,
+      prop.test=0.25,
+      nsamp=10000, 
+      resamp=5,
+      stratified=T,fillsamp=F)
+```
+
+<br>
+
+## Assessing change over time
+
+```{r,eval=F}
+dir.create(paste0(projfolder,"site/Time_series_modelling/RegressionModels/ChangeMaps"))
+
+pred_maps <- list.files(paste0(projfolder,"site/Time_series_modelling/RegressionModels/Outputs/"),
+                        pattern='.tif',full.names = T)
+pred_tifs <- purrr::map(pred_maps,raster::raster)
+
+names(pred_tifs) <- gsub('.tif',basename(pred_maps),replacement="")
+
+year_combo <- data.frame(startyear=c(names(pred_tifs)[1:5],names(pred_tifs)[1]),endyear=c(names(pred_tifs)[2:6],names(pred_tifs)[6]))
+
+purrr::map2(as.character(year_combo$startyear),as.character(year_combo$endyear),.f=function(x,y){
+  start_bare <- pred_tifs[[x]]
+  end_bare <- pred_tifs[[y]]
+  change_bare <-raster::overlay(start_bare,end_bare,fun=function(x,y){y-x}) 
+  endyear <- gsub('_barepeat',gsub('site',y,replacement=''),replacement='')
+  raster::writeRaster(change_bare,paste0(projfolder,"site/Time_series_modelling/RegressionModels/ChangeMaps/",x,endyear,'change.tif'),overwrite=T)
+})
+
+```

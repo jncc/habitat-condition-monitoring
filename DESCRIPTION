@@ -1,0 +1,47 @@
+Package: HabChangeDetection
+Type: Package
+Title: Habitat Change Detection Functions
+Version: 0.1.0
+Authors@R: 
+    c(person(given = "Graham",
+           family = "French",
+           role = c("aut", "cre"),
+           email = "Graham.French@jncc.gov.uk"),
+      person(given = "Becky",
+           family = "Trippier",
+           role = c("aut"),
+           email = "Becky.Trippier@jncc.gov.uk")
+           )   
+Description: This package contains the functions for processing the Earth Observation satellite imagery for the Habitat Change Detection app, as part of the Copernicus User Uptake project
+License: OGL
+Encoding: UTF-8
+LazyData: true
+Imports: 
+    dplyr,
+    raster,
+    sf,
+    knitr,
+    tmap,
+    RColorBrewer,
+    purrr,
+    magrittr,
+    ggplot2,
+    viridis,
+    DT,
+    plotly,
+    rgeos,
+    rgdal,
+    stringr,
+    sp,
+    lubridate,
+    fasterize,
+    tibble,
+    plyr,
+    APfun,
+    kableExtra,
+    fs,
+    magick,
+    tidyr,
+    mapview,
+    gdalUtils
+RoxygenNote: 7.1.1

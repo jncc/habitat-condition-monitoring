@@ -1,0 +1,284 @@
+---
+title: "Bare Peat Detection In High-Resolution Imagery"
+author: "Becky Trippier"
+date: "17/06/2020"
+output:
+  html_document:
+    df_print: paged
+    css: style.css
+    includes:
+      before_body: header.html
+  pdf_document: default
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE,echo=F}
+
+knitr::opts_chunk$set(echo = TRUE)
+# Built with r 3.6.0
+
+```
+
+<div class="mycontent">
+
+The purpose of this guide is to explain the steps to from high-resolution images, either captured by drones or satellites, to use indices thresholding to detect areas of bare peat in the imagery. This aims to produce fine-scale maps of bare peat which can be used to inform ground teams about habitat condition and can help monitor how this changes over time and restoration efforts.
+
+The Peatpal application runs though these steps calculting these functions in the background to provide an easy interface for the use to explore thresholds for detecting areas of bare peat in the imagery.
+
+<br>
+
+This walkthrough explains the processes of: 
+
+* Calculating indices layers from high-resolution imagery
+* Analysing the differences between bare and vegetated peat
+* Thresholding the imagery to detect bare peat pixels
+
+<br><br>
+
+## Calculating Indices
+
+The Indices you can create will depend on the high-resolution imagery you have and the sensor information which has captured the information. A useful website to check for multispectral data is https://www.indexdatabase.de/db/i.php which can suggestfor each Sensor which indices you can calculate with the available bands.
+
+To try to streamline the process, the 'RunIndices.R' script can be called. This calculates common indices using the common red, blue, green and near-infrared bands, and can also calculate NBR if the short-wave infrared band is provided.This function can iterate through multiple imagery files and can calculate:
+
+* EVI - Enhanced Vegetation Index
+* GLI - Green Leaf Index
+* GNDVI - Green normalized difference index
+* RDVI - Renormalized Difference Vegetation Index
+* SAVI - Soil Adjusted Vegetation Index
+* SBL - Soil Background line
+* RB - Red/blue
+* RG - Red/Green
+* Brightness - Brightness (mean of RGB bands)
+* NBR - Normalized Difference NIR/SWIR Normalized burn ratio
+* NDWI -  Normalized Difference Water Index 
+
+<p>
+
+### Example 
+
+In this example, we have used DEFRA's Aerial Photography GB (APGB) service to obtain Red-Green-Blue (RGB) aerial photography at 25cm spatial resolution and Colour InfraRed (CIR) aerial photography at 50cm resolution. 
+
+In order to calculate indices with the near-infrared band (the first band in the CIR image), this needs to be resampled to the same resolution as the RGB image so that they can be compared together. The comboAPGB() function resamples the nir band using a bilinear method to 25cm and adds the layer to the RGB image to create a 'combined' image.
+
+<br>
+```{r apgb, include=T,message=F,warning=F,fig.show = "hold", out.width = "50%", fig.align = "default",eval=F}
+dirpath <- "folderpath/"
+
+CIR <- raster::brick(paste0(dirpath,"CIR/SE0500.tif"))
+RGB <- raster::brick(paste0(dirpath,"RGB/SE0500.tif"))
+
+#plot images
+tmap::tm_shape(RGB) + 
+  tmap::tm_rgb(r=1,g=2,b=3)
+
+tmap::tm_shape(CIR) + 
+  tmap::tm_rgb(r=1,g=2,b=3)
+
+#run function to resample nir band from image b, and combine with image a. the nir argument specifys which band is the nir band in image b and the start and end arguments are for iterating between many data files. 
+#load package
+#devtools::load_all(".")
+#library(BPMap)
+comboAPGB(a.path=paste0(dirpath,"RGB/"),
+          b.path=paste0(dirpath,"CIR/"),
+          nir=1,
+          out.path=dirpath,
+          start=1,end=NULL)
+
+#check the combined raster output
+combined <- raster::brick(paste0(dirpath,"combined/SE0500.tif"))
+combined
+```
+
+<br>
+
+The indices were then calculated from this combined image. The 'RunIndices.R' function contains a lookup table with the calculation between bands for each of the indices, so to add an indices calculation you can add a function line under the header in line 65 '  #create indices function lookup' and then add in the indices to a row in the lookup table created in line 80.
+
+For this example, lets look at create indices for Brightness, NDVI, RG and NBR.
+
+<br>
+
+```{r createindices,eval=F}
+ runIndices(imagepath=paste0(dirpath,"combined/SE0500.tif"),
+            outpath=dirpath,
+            nir=4,r=1, b=3, g=2,
+            indices=c("Brightness","NDVI","RG", "RB"), nf=T)
+
+```
+
+
+```{r indicesmap,eval=F, include=T,message=F,warning=F,fig.show = "hold", out.width = "50%"}
+
+#brightness
+bright <- raster::raster(paste0(dirpath,"Indices/SE0500/SE0500_Brightness.tif"))
+tmap::tm_shape(bright) +
+  tmap::tm_raster(palette = "Greys",n=9)
+#NDVI
+NDVI <- raster::raster(paste0(dirpath,"Indices/SE0500/SE0500_NDVI.tif"))
+tmap::tm_shape(NDVI) +
+  tmap::tm_raster(palette = "Greys",n=9)
+#RB
+RB <- raster::raster(paste0(dirpath,"Indices/SE0500/SE0500_RB.tif"))
+tmap::tm_shape(RB) +
+  tmap::tm_raster(palette = "Greys",n=9)
+#RG
+RG <- raster::raster(paste0(dirpath,"Indices/SE0500/SE0500_RG.tif"))
+tmap::tm_shape(RG) +
+  tmap::tm_raster(palette = "Greys",n=9)
+
+```
+
+<br><br>
+
+## Analysing spectral and indices differences between bare and vegetated peat
+
+To look at the differences between areas of bare peat along with other habitat types we want to distinguish from in the imagery; such as vegetated peat, rock, etc. you will need to either collate training polygons or points, or digitise these yourself from what can be seen in the high-resolution imagery.
+
+We can extract data using the training polygons or points to see differences in the spectral bands and indices for the different classes. This can be done using the function 'ClassProfile.R' which will extract all given points or if training polygons are supplied then extract all the cell values falling within a polygon from the spectral bands and indices layers. This is returned as a dataframe with all class and values as well as plotting the data for comparisons. Depending on the number of bands and indices this may look a bit unruly, so you can use the dataframe directly to look at individual bands and create prettier plots.
+
+<br>
+
+```{r classdiff,eval=F, out.width="100%"}
+
+class_dat <- ClassProfile(trainpath=paste0(dirpath,"Data/training_polys.shp"),
+             classname="class",
+             imagepath=paste0(dirpath,"combined/"),
+             indicespath=paste0(dirpath,"Indices/"),
+             tcrs=27700)
+
+#create interative plots
+library(dplyr)
+  longdat <- class_dat %>% tidyr::gather(Variable,Value,names(class_dat)[which(names(class_dat)!="Class")])
+ p1 <- ggplot2::ggplot(data = longdat, ggplot2::aes(x=Class, y=Value)) +
+    ggplot2::geom_boxplot(ggplot2::aes(fill=Class), outlier.shape=NA)+
+    ggplot2::facet_wrap(. ~ Variable, scales="free",ncol=3) +
+    ggplot2::scale_fill_viridis_d(option = "D",alpha=0.7) +
+    ggplot2::theme_minimal() + ggplot2::labs(fill='Class') +
+    ggplot2::theme(strip.background =ggplot2::element_rect(fill="#3F9C35")) +
+    ggplot2::theme(strip.text = ggplot2::element_text(colour = 'white')) +
+    ggplot2::theme(axis.title.x=ggplot2::element_blank(), axis.text.x=ggplot2::element_blank(),
+          axis.ticks.x=ggplot2::element_blank())
+ fig <- plotly::ggplotly(p1) 
+ for(i in 1:length(fig$x$data)) {
+   fig$x$data[[i]]$marker$opacity = 0
+ }
+ fig 
+```
+
+<br>
+
+We can also summarise the data into a table to look at the differences between classes, highlighting where threshold values may lie and the overlap between class ranges.
+
+<br>
+
+``` {r summarytable,eval=F}
+summ <- longdat %>%
+  dplyr::group_by(Class,Variable) %>%
+  dplyr::summarise(Min=round(min(Value),digits=3),Q1=round(quantile(Value,0.25),digits=3),
+            Mean=round(mean(Value),digits=3),Q3=round(quantile(Value,0.75),digits=3),
+            Max=round(max(Value),digits=3),SD=round(sd(Value),digits=3))
+
+DT::datatable(summ)
+
+
+```
+
+<br><br>
+
+## Thresholding the imagery to detect bare peat pixels
+
+The differences seen in the spectral bands and indices can then be used to develop thresholding rules for seperating out the bare peat.This can be tricky particularly on a pixel-by-pixel basis with often some neighbouring cells of bare peat not meeting thresholding criteria.So this takes some trial and error testing out different values with the different indices and bands available. 
+
+The 'Peatpal' application was developed to help explore these threshold values easily, using sliders to adjust and rerun the rule calculation. this is useful, however its important to note currently this is working with imagery at 1m spatial resolution due to the maxximum number of pixels leaflet is able to plot. Therefore any input imagery is resampled to 1m and thresholded at this resolution. When working at higher resolutions it can be useful to explore possible thresholds, and then running the actual thresholding rule calculation in R directly with the highest possible resolution data and seeing the results. This can be done with the following code ...
+
+<br>
+
+```{r threshtile, echo=T, message=F,warning=F,eval=F}
+
+# Looking at the data, I've decided to create my rule with Brightness, NDVI, RG, RB
+
+# here is my thresholding rule for bare peat based on th values in the class analysis
+# x1 = brightness, x2 = NDVI, x3 = RB, x4 = RG
+thresh_fun <- function(x1,x2,x3,x4) {
+       ifelse(x1 < 100 & x2 <0.1 & x3 < 0.8 & x4 < 1, 1, NA) 
+}
+
+# Now to apply this rule to my imagery
+
+##for a single or multiple images where you have already calculated the indices layers...
+ #get the names of the images
+ imgpaths<- list.files(paste0(dirpath,"combined/"),full.names = T)
+ #create a folder to store the outputs
+ if(!dir.exists(paste0(dirpath,"bare"))){
+  dir.create(paste0(dirpath,"bare"))
+ }
+ # apply the thresholding rule
+ purrr::map(imgpaths,.f=function(x){
+   img <- gsub(basename(x),pattern=".tif",replacement="")
+   indices <- c(paste0(dirpath,"Indices/",img,"/",img,"_Brightness.tif"),
+                 paste0(dirpath,"Indices/",img,"/",img,"_NDVI.tif"),
+                paste0(dirpath,"Indices/",img,"/",img,"_RB.tif"),
+                paste0(dirpath,"Indices/",img,"/",img,"_RG.tif"))
+   indlist <- purrr::map(indices,.f=raster::raster)
+   ind.stack <- raster::stack(indlist)
+   #Apply function to raster stack
+   r.class <- raster::overlay(ind.stack, fun=thresh_fun)
+   raster::writeRaster(r.class,paste0(dirpath,"bare/Bare_",img,".tif"),overwrite=T)
+ })
+
+# #plot map example - in 1m res
+tile <- raster::brick(paste0(dirpath,"combined/SE0500.tif"))
+tiledep <- raster::projectRaster(tile, res = 1, crs = raster::crs(tile))
+r.class <- raster::raster(paste0(dirpath,"bare/Bare_SE0500.tif"))
+r.classdep <- raster::projectRaster(r.class, res = 1, crs = raster::crs(tile))
+
+tiledep@data@min <- c(0,0,0,0)
+tiledep@data@max <- c(225,225,225,225)
+m <-mapview::viewRGB(x=tiledep, r = 1, b = 3, g = 2, label = TRUE,method='bilinear',maxpixels =  1.6e+07)
+#with bare overlay
+pal <- leaflet::colorNumeric("#FF0000", domain=c(NA,1),na.color = "transparent")
+#plot with raster overlay
+fullm <- m + mapview::mapview(r.classdep,col.regions =pal, na.color =NA,legend=F,maxpixels =  1.6e+07)
+fullm
+
+```
+
+<br>
+
+To iterate this over lots of images,the 'barethresh.R' will run through each of your files and for each calculate the indices layers needed and the threshold based on the supplied rule. 
+
+<br>
+
+```{r multiiterate, warning=F,message=F,eval=F}
+#run thresholding rule
+barethresh(Img.path=paste0(dirpath,"combined/"), 
+           out.path=dirpath,
+           spec.bands=NA, #if spectral bands are included in the thresholding, the band number
+           ind.name=c("Brightness", "NDVI","RB","RG"), #name of indices, should be in alphabetical order and will be used in this order in the thresholding function
+           c.fun=thresh_fun, #thresholding function
+           nir=4, r=1,g=2,b=3, #band numbers within the imagery
+           start=1)
+
+```
+<br>
+
+Example produced fine scale map of bare peat:
+
+```{r plotmask,eval=F}
+#plot
+# #plot map example - in 1m res
+tile <- raster::brick(paste0(dirpath,"combined/SE0500.tif"))
+tiledep <- raster::projectRaster(tile, res = 1, crs = raster::crs(tile))
+tiledep@data@min <- c(0,0,0,0)
+tiledep@data@max <- c(225,225,225,225)
+#get new layer
+r.class <- raster::raster(paste0(dirpath,"training/TRAIN_SE0500.tif"))
+r.classdep <- raster::projectRaster(r.class, res = 1, crs = raster::crs(tile))
+#plot
+m <-mapview::viewRGB(x=tiledep, r = 1, b = 3, g = 2, label = TRUE,method='bilinear',maxpixels =  1.6e+07)
+#with bare overlay
+pal <- leaflet::colorNumeric("#FF0000", domain=c(NA,1),na.color = "transparent")
+#plot with raster overlay
+fullm <- m + mapview::mapview(r.classdep,col.regions =pal, na.color =NA,legend=F,maxpixels =  1.6e+07)
+fullm
+```
