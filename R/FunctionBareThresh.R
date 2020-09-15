@@ -2,7 +2,6 @@
 ##
 ## Script Name: Thresholding bare peat based on indices
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

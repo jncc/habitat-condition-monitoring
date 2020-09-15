@@ -2,7 +2,6 @@
 ##
 ## Script Name: Function for combining the apgb RGB and CIR images
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

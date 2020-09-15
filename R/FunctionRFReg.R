@@ -2,7 +2,6 @@
 ##
 ## Script Name: Regression modelling
 ##
-## Author: Becky Tripier, Graham French
 ##
 ## Contact (if different from above):
 ##

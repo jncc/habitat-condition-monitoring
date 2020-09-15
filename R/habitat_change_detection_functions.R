@@ -2,7 +2,6 @@
 ##
 ## Script Name: Habitat change detection functions - square bb and reduce image size
 ##
-## Author: Graham French
 ##
 ## Contact (if different from above):
 ##

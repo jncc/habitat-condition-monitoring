@@ -2,7 +2,6 @@
 ##
 ## Script Name: Function script for analysing the differences between different classes in the imagery determined by points of polygons
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

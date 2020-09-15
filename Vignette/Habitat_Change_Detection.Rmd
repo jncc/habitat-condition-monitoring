@@ -1,6 +1,5 @@
 ---
 title: "Habitat_Change_Detection"
-author: "Becky Trippier"
 date: "01/07/2020"
 output:
   html_document:

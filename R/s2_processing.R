@@ -2,7 +2,6 @@
 ##
 ## Script Name: Preparing Sentinel-2 imagery by cloud and shadow masking and calculating indices
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

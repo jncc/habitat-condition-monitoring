@@ -2,7 +2,6 @@
 ##
 ## Script Name: Calculate indices for Sentinel-1 imagery
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

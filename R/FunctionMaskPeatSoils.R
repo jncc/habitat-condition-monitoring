@@ -2,7 +2,6 @@
 ##
 ## Script Name: Mask to peat soils
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

@@ -2,7 +2,6 @@
 ##
 ## Script Name: Function to extract training data from a variable stack
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

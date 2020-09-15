@@ -1,6 +1,5 @@
 ---
 title: "Bare Peat Regression Modelling"
-author: "Becky Trippier"
 date: "23/06/2020"
 output:
   html_document:

@@ -2,7 +2,6 @@
 ##
 ## Script Name: Function for compiling variable stack from sentinel 2 imagery and indices
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

@@ -2,7 +2,6 @@
 ##
 ## Script Name: Function to rename APGB imagery with dates flown
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

@@ -2,7 +2,6 @@
 ##
 ## Script Name: Bare Peat Masking
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

@@ -2,7 +2,6 @@
 ##
 ## Script Name: Preparing the APGB classified images as percentage covers of bare peat.
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

@@ -2,7 +2,6 @@
 ##
 ## Script Name:Script for creating S1 false colour thumbnails
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##

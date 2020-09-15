@@ -2,7 +2,6 @@
 ##
 ## Script Name: Zonal statistics function
 ##
-## Author: Becky Trippier, Graham French
 ##
 ## Contact (if different from above):
 ##

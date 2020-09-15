@@ -2,7 +2,6 @@
 ##
 ## Script Name: change statistics function
 ##
-## Author: Becky Trippier
 ##
 ## Contact (if different from above):
 ##
