@@ -7,7 +7,7 @@
 ##
 ## Date Created: 2020-06-29
 ##
-## Date Modified: 2020-09-11
+## Date Modified: 2020-10-08
 ##
 ## Licence: JNCC
 ##
@@ -116,15 +116,15 @@ zonal_stats <- function(polys,polyfield='id', s2path=NA,s1path=NA, outfolder, si
       lookup <- tibble::tribble(~index,~breaks,~palette,
                                 "NDVI", seq(-1,1,by=0.2),terrain.colors(9,rev=T),
                                 "NDWI",seq(-1,1,by=0.2),"Blues",
-                                "NDMI",seq(-1,1,by=0.2),"Blues")
+                                "NDMI",seq(-1,1,by=0.2),"Purples")
       indexbreak <- lookup %>% dplyr::filter(index==indexname)
       tmap::tmap_options(show.messages = FALSE)
       image_thumbnail <- tmap::tm_shape(thumbs) +
         tmap::tm_raster(palette = unlist(indexbreak$palette),
                         style = "fixed",
                         breaks = unlist(indexbreak$breaks),midpoint=0,n=10) +
-        tmap::tm_credits(paste0(as.character(date),"_",indexname), size = 1, col = "black", fontface = "bold",
-                       position = c(0.7, 0.01)) +
+        tmap::tm_credits(paste0(as.character(date)), size = 2, col = "black", fontface = "bold",
+                         position = c(0.65, 0.01),bg.color='white',bg.alpha=0.5) +
       tmap::tm_legend(show = F) +
       tmap::tm_layout(outer.margins = c(0, 0, 0, 0)) +
         tmap::tm_facets(free.scales = FALSE)
@@ -135,10 +135,10 @@ zonal_stats <- function(polys,polyfield='id', s2path=NA,s1path=NA, outfolder, si
     sat_img <- satellite_msk[[1:3]]
     sat_img[sat_img>255]<-255
     rgb_thumb <- suppressWarnings(tmap::tm_shape(sat_img) + tmap::tm_rgb(r=3, b=1, g=2,max.value = 255) +
-      tmap::tm_credits(paste0(as.character(date),"_S2"), size = 1, col = "black", fontface = "bold",
-                       position = c(0.7, 0.01)) + tmap::tm_layout(outer.margins = c(0, 0, 0, 0)))
+      tmap::tm_credits(paste0(as.character(date)), size = 0.5, col = "black", fontface = "bold",
+                       position = c(0.7, 0.01),bg.color='white',bg.alpha=0.5) + tmap::tm_layout(outer.margins = c(0, 0, 0, 0)))
     suppressWarnings(tmap::tmap_save(rgb_thumb,filename =  paste0(outfolder,'ZonalStats/s2/thumbs/',as.character(date),'_RGB.png'),
-                    width = 6, height = 6))
+                                     width = 450, height = 450))
 
     #rasterize polygons
     rtemplate <-raster::raster(crs=raster::crs(polygons),res=raster::res(ind_stack$ndvi),ext=raster::extent(ind_stack$ndvi))
@@ -216,17 +216,17 @@ zonal_stats <- function(polys,polyfield='id', s2path=NA,s1path=NA, outfolder, si
         strindex <- stringr::str_split(names(thumbs),"_")
         indexname <- strindex[[1]][length(strindex[[1]])]
         #mapping lookup
-        lookup <- tibble::tribble(~index,~breaks,
-                                  "RVI", seq(0,2,by=0.1),
-                                  "RVIv",seq(0,5,by=0.2))
+        lookup <- tibble::tribble(~index,~breaks,~palette,
+                                  "RVI", seq(1,1.6,by=0.1),"viridis",
+                                  "RVIv",seq(0,4,by=0.2),"viridis")
         indexbreak <- lookup %>% dplyr::filter(index==indexname)
         tmap::tmap_options(show.messages = FALSE)
         image_thumbnail <- tmap::tm_shape(thumbs) +
-          tmap::tm_raster(palette = "viridis",
+          tmap::tm_raster(palette = indexbreak$palette,
                           style = "fixed",
                           breaks = unlist(indexbreak$breaks)) +
-          tmap::tm_credits(paste0(as.character(date),"_",indexname), size = 1, col = "black", fontface = "bold",
-                           position = c(0.7, 0.01)) +
+          tmap::tm_credits(paste0(as.character(date)), size = 2, col = "black", fontface = "bold",
+                           position = c(0.65, 0.01),bg.color='white',bg.alpha=0.5) +
           tmap::tm_legend(show = FALSE) +
           tmap::tm_layout(outer.margins = c(0, 0, 0, 0))
         tmap::tmap_save(image_thumbnail,filename =  paste0(outfolder,'ZonalStats/s1/thumbs/',as.character(date),"_",indexname,'.png'),
@@ -241,8 +241,8 @@ zonal_stats <- function(polys,polyfield='id', s2path=NA,s1path=NA, outfolder, si
         tmap::tm_raster(palette = "Greys",
                         style = "fixed",
                         breaks = seq(-30,20,by=5),midpoint=0,n=10) +
-        tmap::tm_credits(paste0(as.character(date),"_S1"), size =1, col = "black", fontface = "bold",
-                         position = c(0.7, 0.01)) +
+        tmap::tm_credits(paste0(as.character(date)), size =2, col = "black", fontface = "bold",
+                         position = c(0.65, 0.01),bg.color='white',bg.alpha=0.5) +
         tmap::tm_legend(show = F) +
         tmap::tm_layout(outer.margins = c(0, 0, 0, 0)) +
         tmap::tm_facets(free.scales = FALSE)
