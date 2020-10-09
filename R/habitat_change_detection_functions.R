@@ -2,7 +2,6 @@
 ##
 ## Script Name: Habitat change detection functions - square bb and reduce image size
 ##
-##
 ## Contact (if different from above):
 ##
 ## Date Created: 2020-08-24
@@ -15,7 +14,7 @@
 ## Abstract:
 ##  Create square bounding box polygon - This function creates a square bounding box polygon for a site, buffered by 10m so that it includes a margin of single raster pixels
 ##  Reduce image size - This function reduces the size of an image, saving the original image in an archive folder
-##
+##  create legend thumbnail - This function creates a legend image for the thumbnails
 ##
 ##
 ## R version 3.6.1 (2019-07-05)
@@ -108,5 +107,54 @@ reduce_image_size <- function(path_image, image_size = "33%") {
 }
 
 
+#' create legend thumbnail
+#'
+#' @param r raster layer
+#' @param index index name, this will be applied for the output filename
+#' @param breaks breaks to pass into the tm_raster function, see ?tm_raster for more info.
+#' @param palette colour palette to pass into the tm_raster function, see ?tm_raster for more info.
+#' @param labels labels to pass into the tm_raster function, see ?tm_raster for more info.
+#' @param outfolder output folder to save the images
+#' @param continuous logical, whether to plot on a continuous scale or fixed categories.
+#'
+#' @return image png of the legend
+#' @export
+#'
+#' @examples
+#'
+legend_thumbnail <- function(r, index, breaks, palette,labels,outfolder,continuous=F){
+  indices<-raster::raster(r)
+  if(continuous==T){
+    thumbnail_legend <- tmap::tm_shape(indices) +
+      tmap::tm_raster(palette =  palette,
+                      style = "cont",
+                      breaks = breaks,midpoint=0,n=10,
+                      labels=labels,
+                      legend.is.portrait=FALSE,
+                      title="",
+                      legend.format=list(text.separator="-",text.to.columns=TRUE))+
+      tmap::tm_legend(only=TRUE,
+                      position=c("center","center")) +
+      tmap::tm_facets(free.scales = FALSE)
+    tmap::tmap_save(thumbnail_legend,filename =  paste0(outfolder,index,'_cont.png'),
+                    width = 350, height = 55, units="px")
+  } else {
+    thumbnail_legend <- tmap::tm_shape(indices) +
+      tmap::tm_raster(palette =  palette,
+                      style = "fixed",
+                      breaks = breaks,midpoint=0,n=10,
+                      labels=labels,
+                      legend.is.portrait=FALSE,
+                      title="",
+                      legend.format=list(text.separator="-",text.to.columns=TRUE))+
+      tmap::tm_legend(only=TRUE,
+                      height=1,
+                      position=c("center","center"))+
+      tmap::tm_facets(free.scales = FALSE)
+    tmap::tmap_save(thumbnail_legend,filename =  paste0(outfolder,index,'_fixed.png'),
+                    width = 350, height = 55, units="px")
+  }
+
+}
 
 
