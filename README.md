@@ -33,6 +33,10 @@ This R package was developed by JNCC under the Copernicus User Uptake Work Packa
 * <b>change_stats</b> - calculates monthly, seasonal summaries per polygon, then calculates summary statistics per habitat type.
 * <b>create_square_bounding_box_polygon</b> - This function creates a square bounding box polygon for a site, buffered by 10m so that it includes a margin of single raster pixels
 * <b>reduce_image_size</b> - This function reduces the size of an image, saving the original image in an archive folder
+* <b>legend_thumbnail</b> - This function creates a legend image for the thumbnails
+* <b> fileEdit </b> - Function to edit the zonal stats txt files to remove additional rownames column and add a monthdate column
+* <b> fileEdit2 </b> - Function to write the habitat names into the zonal stats txt files
+* <b> flag_change </b> - Function to flag change using the outputs of the 'change_stats' function
 
 ### Bare Peat Mapping
 
