@@ -9,8 +9,9 @@
 ##
 ## Date Modified:2020-09-11
 ##
-## Licence:JNCC
+## Author: JNCC
 ##
+## Licence: MIT licence##
 ##
 ## Abstract: Function to crop to an AOI (optional) and conduct cloud and shadow masking on a folder of Sentinel-2 imagery. Specified indices will then be calculated from the masked imagery.
 ##

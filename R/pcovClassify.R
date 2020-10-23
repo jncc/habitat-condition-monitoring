@@ -9,8 +9,9 @@
 ##
 ## Date Modified: 2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
 ##
+## Licence: MIT licence##
 ##
 ## Abstract: Function to convert the classified bare peat images into a percentage cover at 10m spatial resolution
 ##

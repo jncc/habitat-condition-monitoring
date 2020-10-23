@@ -9,7 +9,9 @@
 ##
 ## Date Modified: 2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: function to iterate through a folder of s1 imagery and create thumbnails plotting the first imagery band

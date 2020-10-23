@@ -9,8 +9,9 @@
 ##
 ## Date Modified: 2020-06-30
 ##
-## Licence: JNCC
+## Author: JNCC
 ##
+## Licence: MIT licence##
 ##
 ## Abstract: Function to  Iterate through and extract points from folder of variable imagery
 ##

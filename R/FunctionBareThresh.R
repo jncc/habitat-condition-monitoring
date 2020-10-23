@@ -9,7 +9,9 @@
 ##
 ## Date Modified: 2019-03-16
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: function for thresholding based on indices. This will generate the specified indices and threshold based on a supplied function using these layers. The function must use the indices in alphabetical order in order to read in correctly.

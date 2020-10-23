@@ -9,7 +9,9 @@
 ##
 ## Date Modified:  2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: Function to mask tiles to the peat soils and delete any tiles which do not overlap with peat soils. This will overwrite the original imagery with the masked layer and you can use the delete argument to remvoe imagery which does not overlap with the mask.

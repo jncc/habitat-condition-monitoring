@@ -1,6 +1,8 @@
 ---
 title: "Bare Peat Detection In High-Resolution Imagery"
 date: "17/06/2020"
+author: 'JNCC'
+licence: 'MIT licence'
 output:
   html_document:
     df_print: paged

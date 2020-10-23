@@ -9,8 +9,9 @@
 ##
 ## Date Modified:2020-08-14
 ##
-## Licence: JNCC
+## Author: JNCC
 ##
+## Licence: MIT licence##
 ##
 ## Abstract:Function for compiling variable stack from sentinel 2 imagery, indices and additional variable layers
 ##

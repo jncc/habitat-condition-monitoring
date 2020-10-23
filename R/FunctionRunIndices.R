@@ -9,7 +9,9 @@
 ##
 ## Date Modified:2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: Function to iterate through a folder of Sentinel-2 imagery and calculate specified indices. The indices available to calculate are noted in the lookup table within the function. These include:

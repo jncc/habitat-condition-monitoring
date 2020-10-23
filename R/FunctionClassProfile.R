@@ -9,7 +9,9 @@
 ##
 ## Date Modified: 2020-06-19
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract:

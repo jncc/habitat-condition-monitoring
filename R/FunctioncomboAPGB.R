@@ -9,7 +9,9 @@
 ##
 ## Date Modified: 2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: function designed for use with DEFRAs APGB aerial photography to resample the coarser 50cm resolution CIR image in order to combine the near-infrared band with the 25cm resolution RGB image.

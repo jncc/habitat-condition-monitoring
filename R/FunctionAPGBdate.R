@@ -9,7 +9,9 @@
 ##
 ## Date Modified:2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: Function to iterate through imagery and rename with a lookup date.

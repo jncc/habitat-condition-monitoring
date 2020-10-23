@@ -8,8 +8,9 @@
 ##
 ## Date Modified: 2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
 ##
+## Licence: MIT licence##
 ##
 ## Abstract:
 ##  Create square bounding box polygon - This function creates a square bounding box polygon for a site, buffered by 10m so that it includes a margin of single raster pixels

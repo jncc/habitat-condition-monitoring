@@ -8,7 +8,9 @@
 ##
 ## Date Last Modified: 2020-10-09
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract:

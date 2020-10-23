@@ -9,7 +9,9 @@
 ##
 ## Date Modified: 2020-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: Will mask  your classified bare peat image given specified areas to include and exclude

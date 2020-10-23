@@ -9,8 +9,9 @@
 ##
 ## Date Modified: 2020-10-08
 ##
-## Licence: JNCC
+## Author: JNCC
 ##
+## Licence: MIT licence##
 ##
 ## Abstract: Based on the functionality of the NE Living Maps method: takes polygons as shapefiles, rasterizes using the 'fasterize' package, calculates indices from imagery and then uses 'zonal' in the raster package to compute zonal statistics. This iteratees through all the time series imagery adding a row per date per index. Where imagery for a date contains NA values (e.g. cloud masked), the function removes polygon id's which contain any na cells for that date. This is designed to run over small areas, for larger imagery handling then refer to the tiled approch from NE
 ##

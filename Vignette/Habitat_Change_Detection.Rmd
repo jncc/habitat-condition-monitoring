@@ -1,6 +1,8 @@
 ---
 title: "Habitat_Change_Detection"
 date: "01/07/2020"
+author: 'JNCC'
+licence: 'MIT licence'
 output:
   html_document:
     df_print: paged

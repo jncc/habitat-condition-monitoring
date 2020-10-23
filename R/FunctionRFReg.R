@@ -9,7 +9,9 @@
 ##
 ## Date Modified:2019-09-11
 ##
-## Licence: JNCC
+## Author: JNCC
+##
+## Licence: MIT licence
 ##
 ##
 ## Abstract: function to run through random forest regression modelling with a given set of training data and timeseries of environmental variables. This uses stratified sampling to sample data before splitting out into training and test datasets, the proportion of which is defined in the 'prop.test' argument. This trains the model and predicts across the time series data. 'max_tries' defines how many times to run the model and then the predicted maps are meaned at the end to alleviate some sampling bias. The RMSE, Rsquared and variable importance statistics are reported for each model run.
